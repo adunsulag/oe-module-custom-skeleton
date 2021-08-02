@@ -21,6 +21,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Note the below use statements are importing classes from the OpenEMR core codebase
  */
 use OpenEMR\Menu\MenuEvent;
+use OpenEMR\Events\RestApiExtend\RestApiCreateEvent;
 
 class Bootstrap
 {
@@ -33,6 +34,7 @@ class Bootstrap
 
 	public function __construct(EventDispatcherInterface $eventDispatcher)
 	{
+	    $this->eventDispatcher = $eventDispatcher;
 	}
 
 	public function subscribeToEvents()
@@ -54,7 +56,7 @@ class Bootstrap
 		 * @global                       $eventDispatcher @see ModulesApplication::loadCustomModule
 		 * @global                       $module          @see ModulesApplication::loadCustomModule
 		 */
-		$eventDispatcher->addListener(MenuEvent::MENU_UPDATE, [$this, 'addCustomModuleMenuItem']);
+		$this->eventDispatcher->addListener(MenuEvent::MENU_UPDATE, [$this, 'addCustomModuleMenuItem']);
 	}
 
 	public function addCustomModuleMenuItem(MenuEvent $event)
@@ -112,6 +114,22 @@ class Bootstrap
 	}
 
 	public function subscribeToApiEvents() {
-
+	    $this->eventDispatcher->addListener(RestApiCreateEvent::EVENT_HANDLE, [$this, 'addCustomSkeletonApi']);
 	}
+
+	public function addCustomSkeletonApi(RestApiCreateEvent $event)
+    {
+        $apiController = new CustomSkeletonAPI();
+
+        /**
+         * To see the route definitions @see https://github.com/openemr/openemr/blob/master/_rest_routes.inc.php
+         */
+        $event->addToFHIRRouteMap('GET /fhir/CustomSkeletonResource', [$apiController, 'listResources']);
+        $event->addToFHIRRouteMap('GET /fhir/CustomSkeletonResource/:id', [$apiController, 'getOneResource']);
+
+        /**
+         * Events must ALWAYS be returned
+         */
+        return $event;
+    }
 }
