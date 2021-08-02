@@ -20,6 +20,6 @@
     "php": "^7.1"
   },
   "conflict": {
-    "openemr/openemr": ">=5.0.3"
+    "openemr/openemr": "<6.0.0"
   }
 }
