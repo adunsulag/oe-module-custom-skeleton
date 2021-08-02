@@ -70,7 +70,7 @@ class Bootstrap
 	    $menuItem->label = xlt("Custom Module Skeleton");
 	    // TODO: pull the install location into a constant into the codebase so if OpenEMR changes this location it
         // doesn't break any modules.
-	    $menuItem->url = "/interface/modules/custom_modules/oe-module-custom-skeleton/public/sample-module.php";
+	    $menuItem->url = "/interface/modules/custom_modules/oe-module-custom-skeleton/public/sample-index.php";
 	    $menuItem->children = [];
 
 	    /**
