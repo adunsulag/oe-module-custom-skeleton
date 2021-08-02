@@ -15,16 +15,23 @@
 
 namespace OpenEMR\Modules\CustomModuleSkeleton;
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+
+/**
+ * Note the below use statements are importing classes from the OpenEMR core codebase
+ */
+use OpenEMR\Menu\MenuEvent;
+
 class Bootstrap
 {
     const MODULE_INSTALLATION_PATH = "";
     const MODULE_NAME = "oe-module-custom-skeleton";
 	/**
-	 * @var EventDispatcher The object responsible for sending and subscribing to events through the OpenEMR system
+	 * @var EventDispatcherInterface The object responsible for sending and subscribing to events through the OpenEMR system
 	 */
 	private $eventDispatcher;
 
-	public function __construct(EventDispatcher $eventDispatcher)
+	public function __construct(EventDispatcherInterface $eventDispatcher)
 	{
 	}
 
