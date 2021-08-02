@@ -1,6 +1,6 @@
 {
   "name": "adunsulag/oe-module-custom-skeleton",
-  "description": "OpenEMR Custom Module Skeleton Starter",
+  "description": "OpenEMR Custom Module Skeleton Starter Project",
   "type": "openemr-module",
   "license": "GPL-3.0",
   "authors": [
