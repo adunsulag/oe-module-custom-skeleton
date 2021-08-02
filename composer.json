@@ -1,0 +1,25 @@
+{
+  "name": "adunsulag/oe-module-custom-skeleton",
+  "description": "OpenEMR Custom Module Skeleton Starter",
+  "type": "openemr-module",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Stephen Nielson",
+      "email": "stephen@nielson.org",
+      "role": "Developer"
+    }
+  ],
+  "keywords": ["openemr", "openemr-module"],
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {"OpenEMR\\Modules\\CustomModuleSkeleton\\": "src/"}
+  },
+  "require": {
+    "openemr/oe-module-installer-plugin": "^0.1.0",
+    "php": "^7.1"
+  },
+  "conflict": {
+    "openemr/openemr": ">=5.0.3"
+  }
+}
