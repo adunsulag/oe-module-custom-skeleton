@@ -63,7 +63,7 @@ class Bootstrap
 	{
 	    $menu = $event->getMenu();
 
-	    $menuItem = new stdClass();
+	    $menuItem = new \stdClass();
 	    $menuItem->requirement = 0;
 	    $menuItem->target = 'mod';
 	    $menuItem->menu_id = 'mod0';
