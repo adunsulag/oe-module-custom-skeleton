@@ -15,6 +15,9 @@
 
 namespace OpenEMR\Modules\CustomModuleSkeleton;
 
+use OpenEMR\Events\Globals\GlobalsInitializedEvent;
+use OpenEMR\Events\Main\Tabs\RenderEvent;
+use OpenEMR\Services\Globals\GlobalSetting;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -23,32 +26,109 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Events\RestApiExtend\RestApiCreateEvent;
 
+// we import our own classes here.. although this namespace is unnecessary it forces the autoloader to be tested.
+use OpenEMR\Modules\CustomModuleSkeleton\CustomSkeletonAPI;
+
 class Bootstrap
 {
-    const MODULE_INSTALLATION_PATH = "";
+    const MODULE_INSTALLATION_PATH = "/interface/modules/custom_modules/";
     const MODULE_NAME = "oe-module-custom-skeleton";
 	/**
 	 * @var EventDispatcherInterface The object responsible for sending and subscribing to events through the OpenEMR system
 	 */
 	private $eventDispatcher;
 
+    /**
+     * @var GlobalConfig Holds our module global configuration values that can be used throughout the module.
+     */
+	private $globalsConfig;
+
+    /**
+     * @var string The folder name of the module.  Set dynamically from searching the filesystem.
+     */
+    private $moduleDirectoryName;
+
 	public function __construct(EventDispatcherInterface $eventDispatcher)
 	{
+        $this->moduleDirectoryName = basename(dirname(__DIR__));
 	    $this->eventDispatcher = $eventDispatcher;
+
+	    // we inject our globals value.
+	    $this->globalsConfig = new GlobalConfig($GLOBALS);
 	}
 
 	public function subscribeToEvents()
 	{
 		$this->addGlobalSettings();
-		$this->registerMenuItems();
-		$this->subscribeToApiEvents();
+
+		// we only add the rest of our event listeners and configuration if we have been fully setup and configured
+		if ($this->globalsConfig->isConfigured()) {
+            $this->registerMenuItems();
+            $this->registerTemplateEvents();
+            $this->subscribeToApiEvents();
+        }
 	}
+
+    /**
+     * @return GlobalConfig
+     */
+	public function getGlobalConfig()
+    {
+        return $this->globalsConfig;
+    }
 
 	public function addGlobalSettings()
 	{
-	}
+        $this->eventDispatcher->addListener(GlobalsInitializedEvent::EVENT_HANDLE, [$this, 'addGlobalSettingsSection']);
+    }
 
-	public function registerMenuItems()
+    public function addGlobalSettingsSection(GlobalsInitializedEvent $event)
+    {
+        global $GLOBALS;
+
+        $service = $event->getGlobalsService();
+        $section = xlt("Skeleton Module");
+        $service->createSection($section, 'Portal');
+
+        $settings = $this->globalsConfig->getGlobalSettingSectionConfiguration();
+
+        foreach ($settings as $key => $config) {
+            $value = $GLOBALS[$key] ?? $config['default'];
+            $service->appendToSection(
+                $section,
+                $key,
+                new GlobalSetting(
+                    xlt($config['title']),
+                    $config['type'],
+                    $value,
+                    xlt($config['description']),
+                    true
+                )
+            );
+        }
+    }
+
+    /**
+     * We tie into any events dealing with the templates / page rendering of the system here
+     */
+    public function registerTemplateEvents()
+    {
+        $this->eventDispatcher->addListener(RenderEvent::EVENT_BODY_RENDER_POST, [$this, 'renderMainBodyScripts']);
+    }
+
+    /**
+     * Add our javascript and css file for the module to the main tabs page of the system
+     * @param RenderEvent $event
+     */
+    public function renderMainBodyScripts(RenderEvent $event)
+    {
+        ?>
+        <link rel="stylesheet" href="<?php echo $this->getAssetPath();?>css/skeleton-module.css">
+        <script src="<?php echo $this->getAssetPath();?>js/skeleton-module.js"></script>
+        <?php
+    }
+
+    public function registerMenuItems()
 	{
 		/**
 		 * @var EventDispatcherInterface $eventDispatcher
@@ -131,5 +211,15 @@ class Bootstrap
          * Events must ALWAYS be returned
          */
         return $event;
+    }
+
+    private function getPublicPath()
+    {
+        return self::MODULE_INSTALLATION_PATH . ($this->moduleDirectoryName ?? '') . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR;
+    }
+
+    private function getAssetPath()
+    {
+        return $this->getPublicPath() . 'assets' . DIRECTORY_SEPARATOR;
     }
 }
