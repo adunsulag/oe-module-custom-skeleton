@@ -22,6 +22,9 @@ class GlobalConfig
 {
     const CONFIG_OPTION_TEXT = 'oe_skeleton_config_option_text';
     const CONFIG_OPTION_ENCRYPTED = 'oe_skeleton_config_option_encrypted';
+    const CONFIG_OVERRIDE_TEMPLATES = "oe_skeleton_override_twig_templates";
+    const CONFIG_ENABLE_MENU = "oe_skeleton_add_menu_button";
+    const CONFIG_ENABLE_BODY_FOOTER = "oe_skeleton_add_body_footer";
 
     private $globalsArray;
 
@@ -42,8 +45,7 @@ class GlobalConfig
      */
     public function isConfigured()
     {
-        $config = $this->getGlobalSettingSectionConfiguration();
-        $keys = array_keys($config);
+        $keys = [self::CONFIG_OPTION_TEXT, self::CONFIG_OPTION_ENCRYPTED];
         foreach ($keys as $key) {
             $value = $this->getGlobalSetting($key);
             if (empty($value)) {
@@ -86,6 +88,24 @@ class GlobalConfig
                 'title' => 'Skeleton Module Encrypted Option (Encrypted)'
                 ,'description' => 'Example of adding an encrypted global configuration value for your module.  Used for sensitive data'
                 ,'type' => GlobalSetting::DATA_TYPE_ENCRYPTED
+                ,'default' => ''
+            ]
+            ,self::CONFIG_OVERRIDE_TEMPLATES => [
+                'title' => 'Skeleton Module enable overriding twig files'
+                ,'description' => 'Shows example of overriding a twig file'
+                ,'type' => GlobalSetting::DATA_TYPE_BOOL
+                ,'default' => ''
+            ]
+            ,self::CONFIG_ENABLE_MENU => [
+                'title' => 'Skeleton Module add module menu item'
+                ,'description' => 'Shows example of adding a menu item to the system (requires logging out and logging in again)'
+                ,'type' => GlobalSetting::DATA_TYPE_BOOL
+                ,'default' => ''
+            ]
+            ,self::CONFIG_ENABLE_BODY_FOOTER => [
+                'title' => 'Skeleton Module Enable Body Footer example.'
+                ,'description' => 'Shows example of adding a menu item to the system (requires logging out and logging in again)'
+                ,'type' => GlobalSetting::DATA_TYPE_BOOL
                 ,'default' => ''
             ]
         ];

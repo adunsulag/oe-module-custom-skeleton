@@ -19,5 +19,5 @@ namespace OpenEMR\Modules\CustomModuleSkeleton;
  * @global EventDispatcher $eventDispatcher Injected by the OpenEMR module loader;
  */
 
-$bootstrap = new Bootstrap($eventDispatcher);
+$bootstrap = new Bootstrap($eventDispatcher, $GLOBALS['kernel']);
 $bootstrap->subscribeToEvents();

@@ -15,6 +15,10 @@
 
 namespace OpenEMR\Modules\CustomModuleSkeleton;
 
+use OpenEMR\Common\Logging\SystemLogger;
+use OpenEMR\Common\Twig\TwigContainer;
+use OpenEMR\Core\Kernel;
+use OpenEMR\Events\Core\TwigEnvironmentEvent;
 use OpenEMR\Events\Globals\GlobalsInitializedEvent;
 use OpenEMR\Events\Main\Tabs\RenderEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
@@ -28,6 +32,8 @@ use OpenEMR\Events\RestApiExtend\RestApiCreateEvent;
 
 // we import our own classes here.. although this namespace is unnecessary it forces the autoloader to be tested.
 use OpenEMR\Modules\CustomModuleSkeleton\CustomSkeletonAPI;
+use Twig\Error\LoaderError;
+use Twig\Loader\FilesystemLoader;
 
 class Bootstrap
 {
@@ -48,13 +54,36 @@ class Bootstrap
      */
     private $moduleDirectoryName;
 
-	public function __construct(EventDispatcherInterface $eventDispatcher)
-	{
+    /**
+     * @var \Twig\Environment The twig rendering environment
+     */
+    private $twig;
+
+    /**
+     * @var SystemLogger
+     */
+    private $logger;
+
+	public function __construct(EventDispatcherInterface $eventDispatcher, ?Kernel $kernel = null)
+    {
+        global $GLOBALS;
+
+        if (empty($kernel)) {
+            $kernel = new Kernel();
+        }
+
+        // NOTE: eventually you will be able to pull the twig container directly from the kernel instead of instantiating
+        // it here.
+        $twig = new TwigContainer($this->getTemplatePath(), $kernel);
+        $twigEnv = $twig->getTwig();
+        $this->twig = $twigEnv;
+
         $this->moduleDirectoryName = basename(dirname(__DIR__));
 	    $this->eventDispatcher = $eventDispatcher;
 
 	    // we inject our globals value.
 	    $this->globalsConfig = new GlobalConfig($GLOBALS);
+	    $this->logger = new SystemLogger();
 	}
 
 	public function subscribeToEvents()
@@ -113,7 +142,12 @@ class Bootstrap
      */
     public function registerTemplateEvents()
     {
-        $this->eventDispatcher->addListener(RenderEvent::EVENT_BODY_RENDER_POST, [$this, 'renderMainBodyScripts']);
+        if ($this->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_ENABLE_BODY_FOOTER)) {
+            $this->eventDispatcher->addListener(RenderEvent::EVENT_BODY_RENDER_POST, [$this, 'renderMainBodyScripts']);
+        }
+        if ($this->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_OVERRIDE_TEMPLATES)) {
+            $this->eventDispatcher->addListener(TwigEnvironmentEvent::EVENT_CREATED, [$this, 'addTemplateOverrideLoader']);
+        }
     }
 
     /**
@@ -128,15 +162,40 @@ class Bootstrap
         <?php
     }
 
+    /**
+     * @param TwigEnvironmentEvent $event
+     */
+    public function addTemplateOverrideLoader(TwigEnvironmentEvent $event)
+    {
+        try {
+            $twig = $event->getTwigEnvironment();
+            if ($twig === $this->twig) {
+                // we do nothing if its our own twig environment instantiated that we already setup
+                return;
+            }
+            // we make sure we can override our file system directory here.
+            $loader = $twig->getLoader();
+            if ($loader instanceof FilesystemLoader) {
+                $loader->prependPath($this->getTemplatePath());
+            }
+        }
+        catch (LoaderError $error)
+        {
+            $this->logger->errorLogCaller("Failed to create template loader", ['innerMessage' => $error->getMessage(), 'trace' => $error->getTraceAsString()]);
+        }
+    }
+
     public function registerMenuItems()
 	{
-		/**
-		 * @var EventDispatcherInterface $eventDispatcher
-		 * @var array                    $module
-		 * @global                       $eventDispatcher @see ModulesApplication::loadCustomModule
-		 * @global                       $module          @see ModulesApplication::loadCustomModule
-		 */
-		$this->eventDispatcher->addListener(MenuEvent::MENU_UPDATE, [$this, 'addCustomModuleMenuItem']);
+        if ($this->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_ENABLE_MENU)) {
+            /**
+             * @var EventDispatcherInterface $eventDispatcher
+             * @var array $module
+             * @global                       $eventDispatcher @see ModulesApplication::loadCustomModule
+             * @global                       $module @see ModulesApplication::loadCustomModule
+             */
+            $this->eventDispatcher->addListener(MenuEvent::MENU_UPDATE, [$this, 'addCustomModuleMenuItem']);
+        }
 	}
 
 	public function addCustomModuleMenuItem(MenuEvent $event)
@@ -221,5 +280,10 @@ class Bootstrap
     private function getAssetPath()
     {
         return $this->getPublicPath() . 'assets' . DIRECTORY_SEPARATOR;
+    }
+
+    public function getTemplatePath()
+    {
+        return \dirname(__DIR__) . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
     }
 }
