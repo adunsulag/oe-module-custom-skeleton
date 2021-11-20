@@ -15,6 +15,9 @@
 
 namespace OpenEMR\Modules\CustomModuleSkeleton;
 
+/**
+ * Note the below use statements are importing classes from the OpenEMR core codebase
+ */
 use OpenEMR\Common\Logging\SystemLogger;
 use OpenEMR\Common\Twig\TwigContainer;
 use OpenEMR\Core\Kernel;
@@ -22,18 +25,16 @@ use OpenEMR\Events\Core\TwigEnvironmentEvent;
 use OpenEMR\Events\Globals\GlobalsInitializedEvent;
 use OpenEMR\Events\Main\Tabs\RenderEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-
-/**
- * Note the below use statements are importing classes from the OpenEMR core codebase
- */
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Events\RestApiExtend\RestApiCreateEvent;
 
-// we import our own classes here.. although this namespace is unnecessary it forces the autoloader to be tested.
-use OpenEMR\Modules\CustomModuleSkeleton\CustomSkeletonAPI;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Twig\Error\LoaderError;
 use Twig\Loader\FilesystemLoader;
+
+// we import our own classes here.. although this use statement is unnecessary it forces the autoloader to be tested.
+use OpenEMR\Modules\CustomModuleSkeleton\CustomSkeletonAPI;
+
 
 class Bootstrap
 {
