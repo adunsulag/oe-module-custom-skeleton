@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bootstrap custom module skeleton.  This file is an example custom module that can be used
  * to create modules that can be utilized inside the OpenEMR system.  It is NOT intended for
@@ -25,6 +26,7 @@ class GlobalConfig
     const CONFIG_OVERRIDE_TEMPLATES = "oe_skeleton_override_twig_templates";
     const CONFIG_ENABLE_MENU = "oe_skeleton_add_menu_button";
     const CONFIG_ENABLE_BODY_FOOTER = "oe_skeleton_add_body_footer";
+    const CONFIG_ENABLE_FHIR_API = "oe_skeleton_enable_fhir_api";
 
     private $globalsArray;
 
@@ -105,6 +107,12 @@ class GlobalConfig
             ,self::CONFIG_ENABLE_BODY_FOOTER => [
                 'title' => 'Skeleton Module Enable Body Footer example.'
                 ,'description' => 'Shows example of adding a menu item to the system (requires logging out and logging in again)'
+                ,'type' => GlobalSetting::DATA_TYPE_BOOL
+                ,'default' => ''
+            ]
+            ,self::CONFIG_ENABLE_FHIR_API => [
+                'title' => 'Skeleton Module Enable FHIR API Extension example.'
+                ,'description' => 'Shows example of extending the FHIR api with the skeleton module.'
                 ,'type' => GlobalSetting::DATA_TYPE_BOOL
                 ,'default' => ''
             ]

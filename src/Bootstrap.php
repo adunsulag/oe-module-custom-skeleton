@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bootstrap custom module skeleton.  This file is an example custom module that can be used
  * to create modules that can be utilized inside the OpenEMR system.  It is NOT intended for
@@ -24,6 +25,8 @@ use OpenEMR\Core\Kernel;
 use OpenEMR\Events\Core\TwigEnvironmentEvent;
 use OpenEMR\Events\Globals\GlobalsInitializedEvent;
 use OpenEMR\Events\Main\Tabs\RenderEvent;
+use OpenEMR\Events\RestApiExtend\RestApiResourceServiceEvent;
+use OpenEMR\Events\RestApiExtend\RestApiScopeEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Events\RestApiExtend\RestApiCreateEvent;
@@ -33,22 +36,22 @@ use Twig\Error\LoaderError;
 use Twig\Loader\FilesystemLoader;
 
 // we import our own classes here.. although this use statement is unnecessary it forces the autoloader to be tested.
-use OpenEMR\Modules\CustomModuleSkeleton\CustomSkeletonAPI;
+use OpenEMR\Modules\CustomModuleSkeleton\CustomSkeletonRestController;
 
 
 class Bootstrap
 {
     const MODULE_INSTALLATION_PATH = "/interface/modules/custom_modules/";
     const MODULE_NAME = "oe-module-custom-skeleton";
-	/**
-	 * @var EventDispatcherInterface The object responsible for sending and subscribing to events through the OpenEMR system
-	 */
-	private $eventDispatcher;
+    /**
+     * @var EventDispatcherInterface The object responsible for sending and subscribing to events through the OpenEMR system
+     */
+    private $eventDispatcher;
 
     /**
      * @var GlobalConfig Holds our module global configuration values that can be used throughout the module.
      */
-	private $globalsConfig;
+    private $globalsConfig;
 
     /**
      * @var string The folder name of the module.  Set dynamically from searching the filesystem.
@@ -65,7 +68,7 @@ class Bootstrap
      */
     private $logger;
 
-	public function __construct(EventDispatcherInterface $eventDispatcher, ?Kernel $kernel = null)
+    public function __construct(EventDispatcherInterface $eventDispatcher, ?Kernel $kernel = null)
     {
         global $GLOBALS;
 
@@ -80,35 +83,35 @@ class Bootstrap
         $this->twig = $twigEnv;
 
         $this->moduleDirectoryName = basename(dirname(__DIR__));
-	    $this->eventDispatcher = $eventDispatcher;
+        $this->eventDispatcher = $eventDispatcher;
 
-	    // we inject our globals value.
-	    $this->globalsConfig = new GlobalConfig($GLOBALS);
-	    $this->logger = new SystemLogger();
-	}
+        // we inject our globals value.
+        $this->globalsConfig = new GlobalConfig($GLOBALS);
+        $this->logger = new SystemLogger();
+    }
 
-	public function subscribeToEvents()
-	{
-		$this->addGlobalSettings();
+    public function subscribeToEvents()
+    {
+        $this->addGlobalSettings();
 
-		// we only add the rest of our event listeners and configuration if we have been fully setup and configured
-		if ($this->globalsConfig->isConfigured()) {
+        // we only add the rest of our event listeners and configuration if we have been fully setup and configured
+        if ($this->globalsConfig->isConfigured()) {
             $this->registerMenuItems();
             $this->registerTemplateEvents();
             $this->subscribeToApiEvents();
         }
-	}
+    }
 
     /**
      * @return GlobalConfig
      */
-	public function getGlobalConfig()
+    public function getGlobalConfig()
     {
         return $this->globalsConfig;
     }
 
-	public function addGlobalSettings()
-	{
+    public function addGlobalSettings()
+    {
         $this->eventDispatcher->addListener(GlobalsInitializedEvent::EVENT_HANDLE, [$this, 'addGlobalSettingsSection']);
     }
 
@@ -179,15 +182,13 @@ class Bootstrap
             if ($loader instanceof FilesystemLoader) {
                 $loader->prependPath($this->getTemplatePath());
             }
-        }
-        catch (LoaderError $error)
-        {
+        } catch (LoaderError $error) {
             $this->logger->errorLogCaller("Failed to create template loader", ['innerMessage' => $error->getMessage(), 'trace' => $error->getTraceAsString()]);
         }
     }
 
     public function registerMenuItems()
-	{
+    {
         if ($this->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_ENABLE_MENU)) {
             /**
              * @var EventDispatcherInterface $eventDispatcher
@@ -197,79 +198,112 @@ class Bootstrap
              */
             $this->eventDispatcher->addListener(MenuEvent::MENU_UPDATE, [$this, 'addCustomModuleMenuItem']);
         }
-	}
+    }
 
-	public function addCustomModuleMenuItem(MenuEvent $event)
-	{
-	    $menu = $event->getMenu();
-
-	    $menuItem = new \stdClass();
-	    $menuItem->requirement = 0;
-	    $menuItem->target = 'mod';
-	    $menuItem->menu_id = 'mod0';
-	    $menuItem->label = xlt("Custom Module Skeleton");
-	    // TODO: pull the install location into a constant into the codebase so if OpenEMR changes this location it
-        // doesn't break any modules.
-	    $menuItem->url = "/interface/modules/custom_modules/oe-module-custom-skeleton/public/sample-index.php";
-	    $menuItem->children = [];
-
-	    /**
-	     * This defines the Access Control List properties that are required to use this module.
-	     * Several examples are provided
-	     */
-	    $menuItem->acl_req = [];
-
-	    /**
-	     * If you would like to restrict this menu to only logged in users who have access to see all user data
-	     */
-	    //$menuItem->acl_req = ["admin", "users"];
-
-	    /**
-	     * If you would like to restrict this menu to logged in users who can access patient demographic information
-	     */
-	    //$menuItem->acl_req = ["users", "demo"];
-
-
-	    /**
-	     * This menu flag takes a boolean property defined in the $GLOBALS array that OpenEMR populates.
-	     * It allows a menu item to display if the property is true, and be hidden if the property is false
-	     */
-	    //$menuItem->global_req = ["custom_skeleton_module_enable"];
-
-	    /**
-	     * If you want your menu item to allows be shown then leave this property blank.
-	     */
-	    $menuItem->global_req = [];
-
-	    foreach ($menu as $item) {
-		if ($item->menu_id == 'modimg') {
-		    $item->children[] = $menuItem;
-		    break;
-		}
-	    }
-
-	    $event->setMenu($menu);
-
-	    return $event;
-	}
-
-	public function subscribeToApiEvents() {
-	    $this->eventDispatcher->addListener(RestApiCreateEvent::EVENT_HANDLE, [$this, 'addCustomSkeletonApi']);
-	}
-
-	public function addCustomSkeletonApi(RestApiCreateEvent $event)
+    public function addCustomModuleMenuItem(MenuEvent $event)
     {
-        $apiController = new CustomSkeletonAPI();
+        $menu = $event->getMenu();
+
+        $menuItem = new \stdClass();
+        $menuItem->requirement = 0;
+        $menuItem->target = 'mod';
+        $menuItem->menu_id = 'mod0';
+        $menuItem->label = xlt("Custom Module Skeleton");
+        // TODO: pull the install location into a constant into the codebase so if OpenEMR changes this location it
+        // doesn't break any modules.
+        $menuItem->url = "/interface/modules/custom_modules/oe-module-custom-skeleton/public/sample-index.php";
+        $menuItem->children = [];
+
+        /**
+         * This defines the Access Control List properties that are required to use this module.
+         * Several examples are provided
+         */
+        $menuItem->acl_req = [];
+
+        /**
+         * If you would like to restrict this menu to only logged in users who have access to see all user data
+         */
+        //$menuItem->acl_req = ["admin", "users"];
+
+        /**
+         * If you would like to restrict this menu to logged in users who can access patient demographic information
+         */
+        //$menuItem->acl_req = ["users", "demo"];
+
+
+        /**
+         * This menu flag takes a boolean property defined in the $GLOBALS array that OpenEMR populates.
+         * It allows a menu item to display if the property is true, and be hidden if the property is false
+         */
+        //$menuItem->global_req = ["custom_skeleton_module_enable"];
+
+        /**
+         * If you want your menu item to allows be shown then leave this property blank.
+         */
+        $menuItem->global_req = [];
+
+        foreach ($menu as $item) {
+            if ($item->menu_id == 'modimg') {
+                $item->children[] = $menuItem;
+                break;
+            }
+        }
+
+        $event->setMenu($menu);
+
+        return $event;
+    }
+
+    public function subscribeToApiEvents()
+    {
+        if ($this->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_ENABLE_FHIR_API)) {
+            $this->eventDispatcher->addListener(RestApiCreateEvent::EVENT_HANDLE, [$this, 'addCustomSkeletonApi']);
+            $this->eventDispatcher->addListener(RestApiScopeEvent::EVENT_TYPE_GET_SUPPORTED_SCOPES, [$this, 'addApiScope']);
+            $this->eventDispatcher->addListener(RestApiResourceServiceEvent::EVENT_HANDLE, [$this, 'addMetadataConformance']);
+        }
+    }
+
+    public function addCustomSkeletonApi(RestApiCreateEvent $event)
+    {
+        $apiController = new CustomSkeletonRestController();
 
         /**
          * To see the route definitions @see https://github.com/openemr/openemr/blob/master/_rest_routes.inc.php
          */
         $event->addToFHIRRouteMap('GET /fhir/CustomSkeletonResource', [$apiController, 'listResources']);
-        $event->addToFHIRRouteMap('GET /fhir/CustomSkeletonResource/:id', [$apiController, 'getOneResource']);
+        $event->addToFHIRRouteMap('GET /fhir/CustomSkeletonResource/:fhirId', [$apiController, 'getOneResource']);
 
         /**
          * Events must ALWAYS be returned
          */
+        return $event;
+    }
+
+    /**
+     * Adds the webhook api scopes to the oauth2 scope validation events for the standard api.  This allows the webhook
+     * to be fired.
+     * @param RestApiScopeEvent $event
+     * @return RestApiScopeEvent
+     */
+    public function addApiScope(RestApiScopeEvent $event)
+    {
+        if ($event->getApiType() == RestApiScopeEvent::API_TYPE_FHIR) {
+            $scopes = $event->getScopes();
+            $scopes[] = 'user/CustomSkeletonResource.read';
+            $scopes[] = 'patient/CustomSkeletonResource.read';
+            // only add system scopes if they are actually enabled
+            if (\RestConfig::areSystemScopesEnabled())
+            {
+                $scopes[] = 'system/CustomSkeletonResource.read';
+            }
+            $event->setScopes($scopes);
+        }
+        return $event;
+    }
+
+    public function addMetadataConformance(RestApiResourceServiceEvent $event)
+    {
+        $event->setServiceClass(CustomSkeletonFHIRResourceService::class);
         return $event;
     }
 

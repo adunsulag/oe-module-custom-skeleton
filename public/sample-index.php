@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sample HTML page
  *
@@ -9,6 +10,7 @@
  * @copyright Copyright (c) 2021 Stephen Nielson <stephen@nielson.org>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
+
 ?>
 <html>
 <title>Sample Module</title>

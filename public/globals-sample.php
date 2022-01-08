@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sample HTML page with display of global settings
  *
