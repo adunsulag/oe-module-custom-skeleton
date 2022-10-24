@@ -17,11 +17,11 @@
   },
   "require": {
     "openemr/oe-module-installer-plugin": "^0.1.0",
-    "php": "^7.1",
+    "php": "^8.0.24",
     "symfony/event-dispatcher": "^4.4.0",
     "nyholm/psr7": "^1.4"
   },
   "conflict": {
-    "openemr/openemr": "<6.0.0"
+    "openemr/openemr": "<7.0.0"
   }
 }
