@@ -16,6 +16,12 @@
 
 namespace OpenEMR\Modules\CustomModuleSkeleton;
 
+
+/**
+ * @global OpenEMR\Core\ModulesClassLoader $classLoader
+ */
+$classLoader->registerNamespaceIfNotExists('OpenEMR\\Modules\\CustomModuleSkeleton\\', __DIR__ . DIRECTORY_SEPARATOR . 'src');
+
 /**
  * @global EventDispatcher $eventDispatcher Injected by the OpenEMR module loader;
  */
