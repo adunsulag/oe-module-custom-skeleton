@@ -1,7 +1,6 @@
 # OpenEMR Custom Module Skeleton Starter Project
-This is a sample module project that developers can clone and use to create their own custom modules inside 
-the OpenEMR codebase.  These modules leverage the oe-module-install-plugin which installs the custom module
-into the OpenEMR custom module installation folder.
+This is a sample module project that developers can clone and use to create their own custom OpenEMR modules.
+These modules leverage the oe-module-install-plugin which takes care of installing the custom module into OpenEMR.
 
 The project has sample code that demostrates adding your module to the menu system, creating global settings,
 and adding a rest api endpoint.
@@ -45,6 +44,9 @@ composer require adunsulag/oe-module-custom-skeleton
 ```
 
 ### Installing Module via filesystem
+
+We recommend the composer approach above; however, it is possible to manually install a module with the below steps:
+
 If you copy your module into the installation directory you will need to copy your module's composer.json "psr-4" property into your OpenEMR's psr-4 settings.
 You will also need to run a ```composer dump-autoload``` wherever your openemr composer.json file is located in order to get your namespace properties setup properly
 to include your module.
